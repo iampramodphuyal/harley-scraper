@@ -1,3 +1,4 @@
+from typing import Union
 import requests
 import math
 import chardet
@@ -11,12 +12,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from typing import Union
 import time
 
-BASE_URL="https://www.harley-davidson.com/us/en/shop/c/mens-motorcycle-helmets?format=json;locale=en_US;q=mens-motorcycle-helmets;page=1;sp_c=48"
+BASE_URL="https://www.harley-davidson.com/us/en/shop/c/mens-motorcycle-helmets?format=json;locale=en_US;q=mens-motorcycle-helmets;sp_c=48;page="
 DOMAIN_URL="https://www.harley-davidson.com/"
 
-
+# These are the headers we're using for general http requests
 headers = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:144.0) Gecko/20100101 Firefox/144.0",
     "Alt-Used": "www.harley-davidson.com",
@@ -27,7 +29,11 @@ headers = {
     "Connection": "keep-alive"
 }
 
-def scrape_with_api():
+def scrape_with_api() -> None:
+    """
+    Method to collect data via general http request.
+    This method will go through pagination, collects products and execute getDetailPage method for each product
+    """
     totalPages = 1
     page = 1
     pageSize = 48
@@ -133,31 +139,76 @@ def getDetailPage(prd:dict) -> None:
         json.dump(prd_details, f, ensure_ascii=False)
 
 
-def scrape_with_ba():
+def scrape_with_ba() -> None:
     """
     Method to scrape page with browser automation.
     For browser automation, we're using selenium for its versatility.
     """
+    page = 1
+    totalPages = 1
+    products = set()
+    while(True):
+        if page > totalPages:
+            break
+        print(f"Processing Page: {page}")
+        retry = 0
+        paginationUrl = f"{BASE_URL}{page}"
+        response = None
+        while(retry<=5):
+            response = loadSelenium(paginationUrl)
+            if response is None:
+                retry += 1
+                print(f"Request Error: Response not found with automation | Page: {page}, Retry: {retry}")
+                continue
+            
+            break;
+        if response is None:
+            print(f"Request Failed: Error Loading page: {page} | Retry limit exceeds")
+            page += 1
+            continue
+            
+        soup = BeautifulSoup(response, 'html.parser')
+        if page == 1:
+            totalProducts = int(m.group()) if (m := re.search(r"\d+", (s := soup.find(string=re.compile(r"\d+\s+products"))) or "")) else 0
+            totalPages = math.ceil(totalProducts/48)
+            print(f"Found Total Records: {totalProducts} | Total Pages: {totalPages}")
+        
+        # prds = soup.
+        page += 1
+            # products_text = soup.find("p", text="Hide Filters").find_parent("button").find_next_sibling("p").text.strip()
+            # print(products_text)
+            # button = soup.find("button", string=lambda t: t and "Hide Filters" in t)
+            #
+            # if not button:
+            #     # Sometimes the text is inside <p> inside the button
+            #     hide_filters_p = soup.find("p", string=lambda t: t and "Hide Filters" in t)
+            # else:
+            #     hide_filters_p = button.find("p", string=lambda t: t and "Hide Filters" in t)
+            #
+            # products_p = hide_filters_p.find_parent("button").find_next("p") if hide_filters_p else None
+
+
+
+def loadSelenium(url:str) -> Union[str, None]:
     options = webdriver.ChromeOptions()
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-blink-features=AutomationControlled')
+    options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
     # options.add_argument("--headless")  
     # options.add_argument()  
     driver = webdriver.Chrome(options=options)
-
-    driver.get(BASE_URL)
   
     try:
+        driver.get(url)
         WebDriverWait(driver, 10).until(
-            EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a.item-link"))
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.ig-w-full.ig-h-full.ig-flex.ig-flex-col"))
         )
+        time.sleep(2)
+        return driver.page_source
     except TimeoutException:
         print("Timed out waiting for page to load")
 
-
-        
-    links = driver.find_elements(By.CSS_SELECTOR, "a.item-link")
-    page_urls = [link.get_attribute("href") for link in links if link.get_attribute("href")]
-    # all_urls.extend(page_urls)
-    pass
+    return None
 
 
 def main():
@@ -166,4 +217,5 @@ def main():
 if __name__ == "__main__":
     os.makedirs("raw/api/details", exist_ok=True)
     os.makedirs("raw/ui/details", exist_ok=True)
-    scrape_with_api()
+    # scrape_with_api()
+    scrape_with_ba()
