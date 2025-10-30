@@ -132,7 +132,9 @@ def loadSelenium(url:str, page_type:str="listing") -> Union[str, None]:
     # options.add_argument("--headless")  
     
     driver = webdriver.Chrome(options=options)
-  
+    
+    response = None
+
     try:
         driver.get(url)
         check_selector = "div[data-testid='product-summary']"
@@ -145,13 +147,12 @@ def loadSelenium(url:str, page_type:str="listing") -> Union[str, None]:
         
         time.sleep(2)
         
-        driver.quit() #Quit the browser after execution
-        
-        return driver.page_source
+        response = driver.page_source
     except TimeoutException:
         print("Timed out waiting for page to load")
 
-    return None
+    driver.quit() #Quit the browser after execution
+    return response
 
 
 
