@@ -13,6 +13,9 @@ def api_scraper() -> None:
     Method to collect data via general http request.
     This method will go through pagination, collects products and execute getDetailPage method for each product
     """
+
+    print(f"Initiating Crawler To Capture Via API")
+
     totalPages = 1
     page = 1
     pageSize = 48

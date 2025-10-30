@@ -19,6 +19,9 @@ def ui_scraper() -> None:
     Method to scrape page with browser automation.
     For browser automation, we're using selenium for its versatility.
     """
+
+    print(f"Initiating Crawler To Capture Via UI")
+    
     page = 1
     totalPages = 1
     products = set()
