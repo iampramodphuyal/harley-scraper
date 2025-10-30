@@ -2,7 +2,7 @@ import re
 import time
 import math
 import json
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, ProcessingInstruction
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -104,7 +104,8 @@ def load_detail_page(url:str) -> None:
     nxt_data_str= nxt_data.string if nxt_data else ""
 
     nxt_data_js = json.loads(nxt_data_str) if nxt_data_str else {}
-
+    
+    prdid = (lambda m: m.group(1) if m else None)(re.search(r"/p/(.*)", url))
     prd_details = nxt_data_js['props']['pageProps']['initialState']['quickshopProductSlice']['products'][prdid]
     prd_type = prd_details['hdProductType']
     if re.search(r'PARTS_ACCESSORIES', prd_type, re.IGNORECASE):
