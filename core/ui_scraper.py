@@ -75,10 +75,13 @@ def load_detail_page(url:str) -> None:
     """
     Method to load Detail Page Via Browser Automation
     """
+    
+    print(f"Processing Detail URL: {url}")
+    
     retry = 0
     response = None
     while(retry < 5):
-        response = loadSelenium(url)
+        response = loadSelenium(url, 'detail')
         
         if response is None:
             retry += 1
@@ -92,13 +95,15 @@ def load_detail_page(url:str) -> None:
         return
 
     path = urlparse(url).path
+    
     slug = (lambda m: m.group(1) if m else None)(re.search(r"/shop/(.*)/p/", path))
+    
     file_name =f"raw/ui/details/{slug}.html" 
     
     save_file(response, file_name, 'html')
 
 
-def loadSelenium(url:str) -> Union[str, None]:
+def loadSelenium(url:str, page_type:str="listing") -> Union[str, None]:
     """
     Load Selenium For Browser Action
     """
@@ -112,11 +117,17 @@ def loadSelenium(url:str) -> Union[str, None]:
   
     try:
         driver.get(url)
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.ig-w-full.ig-h-full.ig-flex.ig-flex-col"))
+        check_selector = "div[data-testid='product-summary']"
+        if page_type == "listing":
+            check_selector =  "div.ig-w-full.ig-h-full.ig-flex.ig-flex-col"
+        
+        WebDriverWait(driver, 15).until(
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, check_selector))
         )
         
-        time.sleep(5)
+        time.sleep(2)
+        
+        driver.quit() #Quit the browser after execution
         
         return driver.page_source
     except TimeoutException:
