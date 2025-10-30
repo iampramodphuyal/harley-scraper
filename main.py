@@ -5,7 +5,7 @@ from core.ui_scraper import ui_scraper
 
 def main():
     init_tmp_path()
-    # api_scraper()
+    api_scraper()
     ui_scraper()
 
 if __name__ == "__main__":
