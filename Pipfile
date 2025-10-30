@@ -6,10 +6,8 @@ name = "pypi"
 [packages]
 selenium = "*"
 beautifulsoup4 = "*"
-scrapy = "*"
 requests = "*"
 lxml = "*"
-chardet = "*"
 
 [dev-packages]
 
