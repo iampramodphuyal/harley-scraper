@@ -97,6 +97,19 @@ def load_detail_page(url:str) -> None:
         print(f"Request Failed: Faild to Load Detail Page Via Automation, Retry Limit Exceeds | URL: {url}")
         return
 
+
+    soup = BeautifulSoup(response, "html.parser")
+    nxt_data = soup.find("script", {"id": "__NEXT_DATA__"})
+    nxt_data_str= nxt_data.string if nxt_data else ""
+
+    nxt_data_js = json.loads(nxt_data_str) if nxt_data_str else {}
+
+    prd_details = nxt_data_js['props']['pageProps']['initialState']['quickshopProductSlice']['products'][prdid]
+    prd_type = prd_details['hdProductType']
+    if re.search(r'PARTS_ACCESSORIES', prd_type, re.IGNORECASE):
+        print(f"Accessories type found, skipping")
+        return
+
     path = urlparse(url).path
     
     slug = (lambda m: m.group(1) if m else None)(re.search(r"/shop/(.*)/p/", path))
